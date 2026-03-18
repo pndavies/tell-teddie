@@ -1,0 +1,61 @@
+@using System.Diagnostics
+@using Microsoft.AspNetCore.Http
+@inject NavigationManager NavigationManager
+@inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
+
+<div class="error-panel">
+    <div class="error-panel-content">
+        <h3 class="error-panel-title">Something went wrong</h3>
+        <p class="error-panel-message">Please try again. If the problem persists, report it with the details below.</p>
+
+        <div class="error-panel-details">
+            <div class="error-panel-detail"><strong>Correlation ID:</strong> <code>@CorrelationId</code></div>
+            <div class="error-panel-detail"><strong>Page:</strong> <code>@CurrentPath</code></div>
+            <div class="error-panel-detail"><strong>Time (UTC):</strong> <code>@TimestampUtc</code></div>
+        </div>
+
+        <div class="error-panel-actions">
+            <div class="action-buttons">
+                <div class="error-panel__icon"></div>
+
+                <a class="btn-home" @onclick="GoHome">🏠 Return Home</a>
+                @if (!string.IsNullOrWhiteSpace(ReportIssueUrl))
+                {
+                    <a class="btn-issue" href="@ReportIssueUrl" target="_blank" rel="noopener noreferrer">⚠️ Report Issue</a>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Exception? Exception { get; set; }
+
+    private string CorrelationId => Activity.Current?.Id ?? HttpContextAccessor.HttpContext?.TraceIdentifier ?? Guid.NewGuid().ToString("N");
+    private string TimestampUtc => DateTime.UtcNow.ToString("u");
+    private string CurrentPath => NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+
+    private string? ReportIssueUrl
+    {
+        get
+        {
+            var template = Configuration["ErrorReporting:IssueUrlTemplate"];
+            if (string.IsNullOrWhiteSpace(template))
+            {
+                return null;
+            }
+
+            return template
+                .Replace("{correlationId}", Uri.EscapeDataString(CorrelationId))
+                .Replace("{path}", Uri.EscapeDataString(CurrentPath))
+                .Replace("{timestampUtc}", Uri.EscapeDataString(TimestampUtc));
+        }
+    }
+
+    private void GoHome()
+    {
+        NavigationManager.NavigateTo("/", forceLoad: false);
+    }
+}

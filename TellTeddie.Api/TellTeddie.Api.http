@@ -1,0 +1,7 @@
+@TellTeddie.Api_HostAddress = http://localhost:5029
+
+GET {{TellTeddie.Api_HostAddress}}/api/Post/GetAllTextPosts
+Accept: application/json
+
+
+###

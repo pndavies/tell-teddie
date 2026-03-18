@@ -1,0 +1,53 @@
+@page "/"
+@using Microsoft.Extensions.Configuration
+@using TellTeddie.Web.Services
+@layout EmptyLayout
+@inject IConfiguration Configuration
+@inject NavigationManager Navigation
+@inject IComingSoonService _comingSoonService
+@rendermode InteractiveServer
+
+<PageTitle>Tell Teddie</PageTitle>
+
+@if (isComingSoon)
+{
+    <div class="coming-soon-container">
+        <div class="emoji-float emoji-1">🐻</div>
+        <div class="emoji-float emoji-2">🐻</div>
+        <div class="emoji-float emoji-3">🐻</div>
+        <div class="emoji-float emoji-4">🐻</div>
+        <div class="emoji-float emoji-5">🐻</div>
+        <div class="emoji-float emoji-6">🐻</div>
+        <div class="emoji-float emoji-7">🐻</div>
+        <div class="emoji-float emoji-8">🐻</div>
+        <div class="emoji-float emoji-9">🐻</div>
+        <div class="emoji-float emoji-10">🐻</div>
+
+        <div class="coming-soon-content">
+            <img src="assets/images/princess-theodora.png" Princess Theodora" class="theodora-image" />
+            <h1>Tell Teddie, soon.</h1>
+            <div class="subtitle">
+                If you can't wait, <a href="mailto:teddie@tellteddie.com">tell Teddie now</a>.
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isComingSoon;
+    private bool shouldRedirect;
+
+    protected override void OnInitialized()
+    {
+        isComingSoon = _comingSoonService.IsComingSoonMode();
+        shouldRedirect = !isComingSoon;
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender && shouldRedirect)
+        {
+            Navigation.NavigateTo("/app", forceLoad: true);
+        }
+    }
+}

@@ -1,0 +1,148 @@
+.coming-soon-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.coming-soon-content {
+    text-align: center;
+    color: #FFF;
+    position: relative;
+    z-index: 1;
+}
+
+.theodora-image {
+    max-width: 400px;
+    width: 100%;
+    height: auto;
+    margin-bottom: 2rem;
+}
+
+.coming-soon-content h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+.coming-soon-content p {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+
+a {
+    color: #fff;
+}
+
+a:hover {
+    font-style: italic;
+}
+
+/* Floating emoji animations */
+.emoji-float {
+    position: absolute;
+    font-size: 4rem;
+    opacity: 0.5;
+    animation: float 10s infinite;
+    z-index: 0;
+}
+
+.emoji-1 {
+    top: 10%;
+    left: 5%;
+    animation-delay: 0s;
+}
+
+.emoji-2 {
+    top: 60%;
+    right: 8%;
+    animation-delay: 1s;
+}
+
+.emoji-3 {
+    bottom: 20%;
+    left: 12%;
+    animation-delay: 2s;
+}
+
+.emoji-4 {
+    top: 30%;
+    right: 5%;
+    animation-delay: 3s;
+}
+
+.emoji-5 {
+    top: 40%;
+    left: 20%;
+    animation-delay: 3s;
+}
+
+.emoji-6 {
+    top: 40%;
+    right: 28%;
+    animation-delay: 3s;
+}
+
+.emoji-7 {
+    top: 70%;
+    left: 32%;
+    animation-delay: 3s;
+}
+
+.emoji-8 {
+    top: 80%;
+    right: 30%;
+    animation-delay: 3s;
+}
+
+.emoji-9 {
+    top: 5%;
+    right: 30%;
+    animation-delay: 3s;
+}
+
+.emoji-10 {
+    top: 5%;
+    left: 30%;
+    animation-delay: 3s;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px) translateX(0px);
+    }
+    50% {
+        transform: translateY(20px) translateX(10px);
+    }
+}
+
+@media (max-width: 768px) {
+    .theodora-image {
+        max-width: 200px;
+    }
+
+    .coming-soon-content h1 {
+        font-size: 1.5rem;
+    }
+
+    .coming-soon-content p {
+        font-size: 1rem;
+    }
+
+    .emoji-float {
+        font-size: 1.5rem;
+    }
+    .emoji-1 { top: 2%; left: 5%; }
+    .emoji-2 { top: 70%; right: 5%; }
+    .emoji-3 { bottom: 5%; left: 5%; }
+    .emoji-4 { top: 20%; right: 10%; }
+    .emoji-5 { top: 40%; left: 6%; }
+    .emoji-6 { top: 50%; right: 10%; }
+    .emoji-7 { top: 80%; left: 30%; }
+    .emoji-8 { top: 85%; right: 20%; }
+    .emoji-9 { top: 2%; right: 25%; }
+    .emoji-10 { top: 12%; left: 30%; }
+}

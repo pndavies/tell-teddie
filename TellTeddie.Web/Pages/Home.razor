@@ -1,0 +1,95 @@
+﻿@page "/app"
+@rendermode InteractiveServer
+@using TellTeddie.Web.Components.Forms
+@using TellTeddie.Web.Components
+
+<PageTitle>Tell Teddie Bear</PageTitle>
+
+<div class="teddie-container">
+    <!-- Header/Hero Section -->
+    <header class="teddie-header">
+        <div class="header-content">
+            <div class="header-title">
+                <h1 class="brand-title">🐻 Tell Teddie</h1>
+                <p class="brand-subtitle">Share your thoughts, feelings, and stories</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="teddie-main">
+        <div class="container-fluid">
+            <div class="row">
+                <!-- Sidebar (Hidden on mobile) -->
+                <aside class="col-lg-3 d-none d-lg-block">
+                    <div class="sidebar-card">
+                        <div class="sidebar-header">
+                            <h5>About Teddie</h5>
+                        </div>
+                        <p class="sidebar-text">
+                            Teddie is a safe space to share your voice. Post audio messages, text thoughts, or stories with our community.
+                        </p>
+                        <div class="sidebar-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Posts</span>
+                                <span class="stat-value">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Community</span>
+                                <span class="stat-value">Growing</span>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Feed (Main Content) -->
+                <section class="col-lg-6">
+                    <PostFeed @ref="postFeedComponent"></PostFeed>
+                </section>
+
+                <!-- Right Sidebar -->
+                <aside class="col-lg-3 d-none d-lg-block">
+                    <div class="sidebar-card sticky-top">
+                        <div class="sidebar-header">
+                            <h5>Create Post</h5>
+                        </div>
+                        <p class="sidebar-text">
+                            Ready to share? Click the button below to create a new post.
+                        </p>
+                        <button class="btn btn-primary w-100" @onclick="OpenModal">
+                            <span class="me-2">✏️</span> Create Post
+                        </button>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </main>
+
+    <!-- Floating Action Button -->
+    <div class="fab-container">
+        <button class="fab-button" @onclick="OpenModal" aria-label="Create new post" title="Create new post">
+            <span class="fab-icon">+</span>
+        </button>
+    </div>
+
+    <!-- Post Form Modal -->
+    <PostFormModal @bind-IsVisible="isModalVisible" OnPostSubmitted="HandlePostSubmitted"></PostFormModal>
+</div>
+
+@code {
+    private PostFeed? postFeedComponent;
+    private bool isModalVisible = false;
+
+    private void OpenModal()
+    {
+        isModalVisible = true;
+    }
+
+    private async Task HandlePostSubmitted()
+    {
+        if (postFeedComponent != null)
+        {
+            await postFeedComponent.RefreshPosts();
+        }
+    }
+}

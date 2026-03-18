@@ -1,0 +1,258 @@
+﻿:root {
+    --primary-color: #007bff;
+    --secondary-color: #6c757d;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --light-bg: #f8f9fa;
+    --white: #ffffff;
+    --border-color: #dee2e6;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+    --shadow-lg: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+}
+
+.teddie-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+/* Header Section */
+.teddie-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: var(--white);
+    padding: 3rem 0;
+    box-shadow: var(--shadow-lg);
+    margin-bottom: 2rem;
+}
+
+.header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.header-title {
+    text-align: center;
+}
+
+.brand-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.brand-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin: 0.5rem 0 0;
+    font-weight: 300;
+}
+
+/* Main Content */
+.teddie-main {
+    padding: 2rem 0 4rem;
+}
+
+    .teddie-main .container-fluid {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+/* Sidebar Cards */
+.sidebar-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+}
+
+    .sidebar-card:hover {
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-2px);
+    }
+
+.sidebar-header {
+    border-bottom: 2px solid var(--light-bg);
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+}
+
+    .sidebar-header h5 {
+        margin: 0;
+        color: #333;
+        font-weight: 600;
+    }
+
+.sidebar-text {
+    color: var(--secondary-color);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin: 0.5rem 0;
+}
+
+.sidebar-stats {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.stat-item {
+    flex: 1;
+    text-align: center;
+    padding: 0.75rem;
+    background: var(--light-bg);
+    border-radius: 8px;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--secondary-color);
+    font-weight: 500;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-top: 0.25rem;
+}
+
+/* Floating Action Button */
+.fab-container {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 1000;
+}
+
+/* Desktop - Align horizontally with right sidebar, same vertical position */
+@media (min-width: 992px) {
+    .fab-container {
+        position: fixed;
+        bottom: 2rem; /* Same vertical position as mobile */
+        right: auto;
+        left: 50%;
+        margin-left: calc(700px / 2 + 1.5rem); /* Center + half of max container + gap into right sidebar area */
+    }
+}
+
+@media (min-width: 1200px) {
+    .fab-container {
+        margin-left: calc(700px / 2 + 2rem); /* Adjust for larger screens */
+    }
+}
+
+.fab-button {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: var(--white);
+    border: none;
+    font-size: 1.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: var(--shadow-lg);
+    transition: all 0.3s ease;
+    font-weight: bold;
+}
+
+    .fab-button:hover {
+        transform: scale(1.1) rotate(90deg);
+        box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+        color: var(--white);
+        text-decoration: none;
+    }
+
+    .fab-button:active {
+        transform: scale(0.95);
+    }
+
+.fab-icon {
+    display: block;
+    line-height: 1;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .teddie-main {
+        padding: 1rem 0 4rem;
+    }
+
+    .brand-title {
+        font-size: 2rem;
+    }
+
+    .brand-subtitle {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .teddie-header {
+        padding: 2rem 0;
+        margin-bottom: 1rem;
+    }
+
+    .brand-title {
+        font-size: 1.75rem;
+    }
+
+    .brand-subtitle {
+        font-size: 0.95rem;
+    }
+
+    .fab-container {
+        bottom: 1rem;
+        right: 1rem;
+    }
+
+    .fab-button {
+        width: 54px;
+        height: 54px;
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .brand-title {
+        font-size: 1.5rem;
+    }
+
+    .brand-subtitle {
+        font-size: 0.9rem;
+    }
+
+    .sidebar-card {
+        padding: 1rem;
+    }
+
+    .fab-button {
+        width: 50px;
+        height: 50px;
+        font-size: 1.3rem;
+    }
+}
+
+/* Animation for modal open */
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.sidebar-card {
+    animation: slideUp 0.3s ease;
+}

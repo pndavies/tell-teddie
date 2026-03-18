@@ -1,0 +1,406 @@
+﻿@rendermode InteractiveServer
+@inject IAudioPostService _audioPostService
+@inject IPostService _postService
+@using System.ComponentModel.DataAnnotations
+@using TellTeddie.Contracts.DTOs
+@using TellTeddie.Contracts.Models
+@using TellTeddie.Web.Services
+@using TellTeddie.Web.ViewModels
+@using static TellTeddie.Core.Enums.TellTeddieEnums
+@inject IJSRuntime JS
+@inject HttpClient Http
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager Nav
+
+
+<PageTitle>Leave Teddie a Voice Note</PageTitle>
+
+<h3>Create an Audio Post</h3>
+
+@if (!string.IsNullOrEmpty(statusMessage))
+{
+    <p class="@statusCssClass">@statusMessage</p>
+}
+
+<EditForm Model="postViewModel" OnValidSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="name">Name</label>
+        <InputText id="name" class="form-control" @bind-Value="postViewModel.Name" />
+    </div>
+
+    <div class="form-group">
+        <label for="caption">Caption</label>
+        <InputTextArea id="caption" class="form-control" @bind-Value="postViewModel.Caption" rows="4" />
+    </div>
+
+    <!-- Wavesurfer Recorder Visualization -->
+    <div class="form-group mt-4">
+        <label>Audio Recording</label>
+        <div id="waveform" style="border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px;"></div>
+        
+        <div class="btn-toolbar gap-2 my-3">
+            <button type="button" class="btn btn-primary" @onclick="StartRecording" disabled="@(!canStartRecording)">
+                <span>🎤 Start Recording</span>
+            </button>
+            <button type="button" class="btn btn-warning" @onclick="StopRecordingAndPreview" disabled="@(!canStopRecording)">
+                <span>⏹️ Stop Recording</span>
+            </button>
+            @if (hasRecording)
+            {
+                <button type="button" class="btn btn-success" @onclick="PlayRecording" disabled="@isPlaying">
+                    <span>▶️ Play</span>
+                </button>
+                <button type="button" class="btn btn-secondary" @onclick="PauseRecording" disabled="@(!isPlaying)">
+                    <span>⏸️ Pause</span>
+                </button>
+                <button type="button" class="btn btn-outline-danger" @onclick="DiscardRecording">
+                    <span>🗑️ Discard</span>
+                </button>
+            }
+        </div>
+
+        @if (isRecording)
+        {
+            <p class="text-info">
+                <strong>Recording in progress...</strong> Time: @audioTimerCountdown seconds
+            </p>
+        }
+
+        @if (hasRecording && !isRecording)
+        {
+            <p class="text-success">
+                <strong>Recording saved!</strong> Ready to submit when you're done.
+            </p>
+        }
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-lg mt-3" disabled="@(!canSubmit)">Submit Audio Post</button>
+</EditForm>
+
+
+@code {
+
+    // DTOs
+    private List<AudioPostDto>? audioRecordings;
+    private InsertAudioPostDto audioPostDto = new()
+    {
+        Post = new PostDto(),
+        AudioPost = new AudioPostDto()
+    };
+
+    // View Model
+    private PostViewModel postViewModel = new();
+
+    // JS Interop
+    private bool jsReady;
+    private bool isRecording;
+
+    // Recording state
+    private bool hasRecording;
+    private bool isPlaying;
+
+    // CSS & UI
+    private string? statusCssClass;
+    private string? statusMessage;
+
+    // Timers 
+    private int audioTimerCountdown;
+    private System.Timers.Timer? audioTimer;
+
+    // Recording controls
+    private bool canStartRecording => jsReady && !isRecording && !hasRecording;
+    private bool canStopRecording => jsReady && isRecording;
+    private bool canSubmit => !isRecording && hasRecording;
+
+    [Parameter]
+    public EventCallback OnPostSubmitted { get; set; }
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                // Initialize wavesurfer recorder
+                var initialized = await JS.InvokeAsync<bool>("wavesurferRecorder.init", "waveform");
+                jsReady = initialized;
+                
+                if (!jsReady)
+                {
+                    statusMessage = "Failed to initialize audio recorder.";
+                    statusCssClass = "text-danger";
+                }
+                else
+                {
+                    // Set up callback for when playback finishes
+                    await JS.InvokeVoidAsync("wavesurferRecorder.setOnPlayFinished", 
+                        DotNetObjectReference.Create(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                statusMessage = $"Error initializing recorder: {ex.Message}";
+                statusCssClass = "text-danger";
+                jsReady = false;
+            }
+            
+            await InvokeAsync(StateHasChanged);
+        }
+        else if (!jsReady)
+        {
+            // Reinitialize if wavesurfer got destroyed (e.g., when form is shown again)
+            try
+            {
+                var initialized = await JS.InvokeAsync<bool>("wavesurferRecorder.init", "waveform");
+                jsReady = initialized;
+                
+                if (jsReady)
+                {
+                    await JS.InvokeVoidAsync("wavesurferRecorder.setOnPlayFinished", 
+                        DotNetObjectReference.Create(this));
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error reinitializing wavesurfer: {ex.Message}");
+            }
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnPlayFinished()
+    {
+        isPlaying = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task StartRecording()
+    {
+        if (!jsReady || isRecording) return;
+
+        try
+        {
+            // Start recording
+            var started = await JS.InvokeAsync<bool>("wavesurferRecorder.startRecording");
+            
+            if (!started)
+            {
+                statusMessage = "Failed to start recording.";
+                statusCssClass = "text-danger";
+                return;
+            }
+
+            isRecording = true;
+            audioTimerCountdown = 30; // Max 30 seconds
+            statusMessage = "Recording... speak now";
+            statusCssClass = "text-info";
+
+            // Start countdown timer
+            audioTimer = new System.Timers.Timer(1000);
+            audioTimer.Elapsed += async (s, e) =>
+            {
+                if (audioTimerCountdown > 0)
+                {
+                    audioTimerCountdown--;
+                    await InvokeAsync(StateHasChanged);
+                }
+                else
+                {
+                    audioTimer?.Stop();
+                    await StopRecordingAndPreview();
+                }
+            };
+            audioTimer.Start();
+
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Error starting recording: {ex.Message}";
+            statusCssClass = "text-danger";
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task StopRecordingAndPreview()
+    {
+        if (!jsReady || !isRecording) return;
+
+        isRecording = false;
+        audioTimer?.Stop();
+        statusMessage = "Recording stopped. Preview ready.";
+        statusCssClass = "text-success";
+
+        try
+        {
+            // Stop recording and get the blob
+            var success = await JS.InvokeAsync<bool>("wavesurferRecorder.stopRecording");
+            
+            if (!success)
+            {
+                statusMessage = "Failed to stop recording.";
+                statusCssClass = "text-danger";
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
+
+            hasRecording = true;
+            statusMessage = "Recording ready! You can play, re-record, or submit.";
+            statusCssClass = "text-success";
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Error stopping recording: {ex.Message}";
+            statusCssClass = "text-danger";
+            hasRecording = false;
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task PlayRecording()
+    {
+        try
+        {
+            var played = await JS.InvokeAsync<bool>("wavesurferRecorder.playRecording");
+            if (played)
+            {
+                isPlaying = true;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Error playing recording: {ex.Message}";
+            statusCssClass = "text-danger";
+        }
+    }
+
+    private async Task PauseRecording()
+    {
+        try
+        {
+            var paused = await JS.InvokeAsync<bool>("wavesurferRecorder.pauseRecording");
+            if (paused)
+            {
+                isPlaying = false;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Error pausing recording: {ex.Message}";
+            statusCssClass = "text-danger";
+        }
+    }
+
+    private async Task DiscardRecording()
+    {
+        try
+        {
+            var discarded = await JS.InvokeAsync<bool>("wavesurferRecorder.discardRecording");
+            if (discarded)
+            {
+                hasRecording = false;
+                isPlaying = false;
+                statusMessage = "Recording discarded. Ready to record again.";
+                statusCssClass = "text-warning";
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Error discarding recording: {ex.Message}";
+            statusCssClass = "text-danger";
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (!hasRecording)
+        {
+            statusMessage = "Please record audio before submitting.";
+            statusCssClass = "text-danger";
+            return;
+        }
+
+        try
+        {
+            statusMessage = "Uploading audio...";
+            statusCssClass = "text-info";
+            await InvokeAsync(StateHasChanged);
+
+            // Get SAS URL for upload
+            var client = ClientFactory.CreateClient("TellTeddieApi");
+            var sasBlobInfo = await client.GetFromJsonAsync<SasBlobUploadInfo>("api/Post/GetAudioUploadUrl")
+                               ?? throw new InvalidOperationException("Failed to get SAS upload info.");
+
+            // Upload directly from JavaScript
+            await JS.InvokeVoidAsync("wavesurferRecorder.uploadToAzure", sasBlobInfo.SasUrl);
+
+            // Prepare audio post DTO
+            audioPostDto.Post.MediaType = "AUDIO";
+            audioPostDto.Post.CreatedAt = DateTime.UtcNow;
+            audioPostDto.Post.ExpiresAt = DateTime.UtcNow.AddHours(24);
+            audioPostDto.Post.Name = string.IsNullOrWhiteSpace(postViewModel.Name) ? "Anonymous" : postViewModel.Name;
+            audioPostDto.Post.Caption = string.IsNullOrWhiteSpace(postViewModel.Caption) ? "No caption, no problem, just tell Teddie" : postViewModel.Caption;
+            audioPostDto.AudioPost.AudioPostUrl = sasBlobInfo.BlobUrl;
+
+            // Save to backend
+            await _audioPostService.InsertAudioPost(audioPostDto.Post, audioPostDto.AudioPost);
+
+            statusMessage = "Audio post saved successfully!";
+            statusCssClass = "text-success";
+
+            // Reset form
+            ResetFormState();
+
+            // Notify parent
+            await OnPostSubmitted.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Error submitting audio post: {ex.Message}";
+            statusCssClass = "text-danger";
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ResetFormStateAndReinit()
+    {
+        postViewModel = new PostViewModel();
+        hasRecording = false;
+        isPlaying = false;
+        audioPostDto = new()
+        {
+            Post = new PostDto(),
+            AudioPost = new AudioPostDto()
+        };
+        
+        // Mark as not ready so reinit happens on next render
+        jsReady = false;
+        
+        try
+        {
+            // Reinitialize JavaScript wavesurfer for next recording
+            await JS.InvokeVoidAsync("wavesurferRecorder.reinit", "waveform");
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Warning: Could not reinitialize recorder. Please refresh the page.";
+            statusCssClass = "text-warning";
+        }
+    }
+
+    private void ResetFormState()
+    {
+        // Call async version
+        _ = ResetFormStateAndReinit();
+    }
+}
+

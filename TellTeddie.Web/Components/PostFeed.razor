@@ -1,0 +1,132 @@
+﻿@rendermode InteractiveServer
+@inject IPostService _postService;
+@inject NavigationManager Navigation
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.IdentityModel.Tokens
+@using TellTeddie.Contracts.DTOs
+@using TellTeddie.Web.Components.Forms
+@using TellTeddie.Web.Components.Audio
+@using TellTeddie.Web.Services
+@using TellTeddie.Web.ViewModels
+@implements IDisposable
+
+<div class="post-feed">
+    @if (posts is null)
+    {
+        <div class="post-feed-loading">
+            <p><em>Loading posts...</em></p>
+        </div>
+    }
+    else if (!posts.Any())
+    {
+        <div class="post-feed-empty">
+            <p>No posts yet! 🐻</p>
+            <p style="font-size: 0.9rem; margin-top: 0.5rem;">Be the first to share your thoughts with Teddie</p>
+        </div>
+    }
+    else
+    {
+        @foreach (var post in posts)
+        {
+            <div class="post-card">
+                <!-- Post Header -->
+                <div class="meta-data">
+                    <div class="meta-data-author">
+                        <strong class="author">@post.Name</strong>
+                        <span class="timestamp">@post.CreatedAt.ToLocalTime().ToString("g")</span>
+                    </div>
+                </div>
+
+                <!-- Post Content -->
+                <div style="padding: 0 1rem;">
+                    @if (post.TextPost != null)
+                    {
+                        <h5>@post.Caption</h5>
+                        <p class="post-content">@post.TextPost.TextBody</p>
+                    }
+
+                    @if (post.AudioPost != null)
+                    {
+                        <h5>@post.Caption</h5>
+                    
+                        <div class="audio-post">
+                            <!-- WaveSurfer Audio Player -->
+                            <WaveSurferPlayer AudioUrl="@post.AudioPost.AudioPostUrl" Title="@post.Caption" />
+                        </div>
+                    }
+                </div>
+
+                <!-- Post Footer Actions -->
+                <div class="post-actions">
+                    <button class="post-action-btn" title="Like this post">
+                        <span>👍</span> Like
+                    </button>
+                    <button class="post-action-btn" title="Share this post">
+                        <span>📤</span> Share
+                    </button>
+                    <button class="post-action-btn" title="View comments">
+                        <span>💬</span> Comment
+                    </button>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+
+    private List<PostDto>? posts;
+    private System.Timers.Timer? refreshTimer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            posts = await _postService.GetAllPosts();
+        }
+        catch
+        {
+            Navigation.NavigateTo("/Error500");
+            return;
+        }
+
+        refreshTimer = new System.Timers.Timer(10000);
+        refreshTimer.Elapsed += async (s, e) =>
+        {
+            await InvokeAsync(async () =>
+            {
+                try
+                {
+                    posts = await _postService.GetAllPosts();
+                    StateHasChanged();
+                }
+                catch
+                {
+                    Navigation.NavigateTo("/Error500");
+                }
+            });
+        };
+        refreshTimer.Start();
+    }
+
+    public async Task RefreshPosts()
+    {
+        try
+        {
+            posts = await _postService.GetAllPosts();
+            StateHasChanged();
+        }
+        catch
+        {
+            Navigation.NavigateTo("/Error500");
+        }
+    }
+
+    public void Dispose()
+    {
+        refreshTimer?.Stop();
+        refreshTimer?.Dispose();
+    }
+
+}
+

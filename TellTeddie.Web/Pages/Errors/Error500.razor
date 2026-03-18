@@ -1,0 +1,59 @@
+@page "/Error500"
+@rendermode InteractiveServer
+@layout EmptyLayout
+@using TellTeddie.Web.Services
+@inject NavigationManager NavigationManager
+@inject IErrorStateService ErrorStateService
+
+<PageTitle>Something went wrong</PageTitle>
+
+@if (_hasError)
+{
+    <div class="error-container">
+        <div class="emoji-float emoji-1">🐻</div>
+        <div class="emoji-float emoji-2">🐻</div>
+        <div class="emoji-float emoji-3">🐻</div>
+        <div class="emoji-float emoji-4">🐻</div>
+        <div class="emoji-float emoji-5">🐻</div>
+
+        <div class="error-content">
+            <img src="assets/images/princess_tongue-nbg.png" alt="Teddie" class="royal-pup" />
+            <h1 class="error-title">500</h1>
+            <h2 class="error-subtitle">Something went wrong</h2>
+
+            <p class="error-message">
+                Teddie had a little tumble. Please try again, and if it keeps happening, report the issue below.
+            </p>
+
+            <div class="error-panel-wrapper">
+                <ErrorPanel />
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _hasError = false;
+
+    protected override void OnInitialized()
+    {
+        // Check if an error actually occurred during initialization
+        // This happens before rendering, so no flashing occurs
+        if (ErrorStateService.HasError)
+        {
+            _hasError = true;
+            ErrorStateService.ClearError();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_hasError)
+        {
+            // Redirect to 404 if no error occurred
+            NavigationManager.NavigateTo("/404", forceLoad: true);
+        }
+        
+        await base.OnAfterRenderAsync(firstRender);
+    }
+}

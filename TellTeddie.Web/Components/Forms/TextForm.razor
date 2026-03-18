@@ -1,0 +1,76 @@
+﻿@rendermode InteractiveServer
+@inject ITextPostService _textPostService
+@using System.ComponentModel.DataAnnotations
+@using TellTeddie.Contracts.DTOs
+@using TellTeddie.Web.Services
+@using TellTeddie.Web.ViewModels
+@using static TellTeddie.Core.Enums.TellTeddieEnums
+
+
+<PageTitle>Tell Teddie Text Posts</PageTitle>
+
+<h3>Text Posts</h3>
+
+<p>This component handles the UI for the text posts side of your app.</p>
+
+<EditForm Model="@postViewModel" OnValidSubmit="HandleValidTextPostOnSubmit" FormName="testingThisFuckingForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    
+    <div class="form-group">
+        <label for="name">Name</label>
+        <InputText id="name" class="form-control" @bind-Value="postViewModel.Name" />
+    </div>
+    <div class="form-group">
+        <label for="caption">Caption</label>
+        <InputTextArea id="caption" class="form-control" @bind-Value="postViewModel.Caption" rows="4" />
+    </div>
+    <div class="form-group">
+        <label for="textpost">Text Post</label>
+        <InputTextArea id="textPost" class="form-control" @bind-Value="postViewModel.TextBody" rows="4" aria-label="Text Post" />
+        <ValidationMessage For="@(() => postViewModel.TextBody)" />
+    </div>
+
+    <button type="submit">Submit</button>
+</EditForm>
+
+
+@code {
+
+    // View Model
+    private PostViewModel postViewModel = new();
+
+    // Merge & Refresh UI / DB
+    private string? statusMessage;
+    private System.Timers.Timer? refreshTimer;
+
+   
+    // DTOs
+    private InsertTextPostDto textPostDto = new()
+    {
+        Post = new PostDto(),
+        TextPost = new TextPostDto()
+    }; 
+
+    [Parameter]
+    public EventCallback OnPostSubmitted { get; set; }
+
+    private async Task HandleValidTextPostOnSubmit()
+    {
+        textPostDto.Post.MediaType = PostType.TEXT.ToString();
+        textPostDto.Post.CreatedAt = DateTime.UtcNow;
+        textPostDto.Post.ExpiresAt = DateTime.UtcNow.AddHours(24);
+        textPostDto.Post.Name = postViewModel.Name = string.IsNullOrWhiteSpace(postViewModel.Name) ? "Anonymous text" : postViewModel.Name;
+        textPostDto.Post.Caption = postViewModel.Caption = string.IsNullOrWhiteSpace(postViewModel.Caption) ? "No text caption, no problem, just tell Teddie" : postViewModel.Caption;
+        textPostDto.TextPost.TextBody = postViewModel.TextBody;
+    
+        await _textPostService.InsertTextPost(textPostDto.Post, textPostDto.TextPost);
+        
+        statusMessage = "Post submitted!";
+
+        // Notfiy parent component to refresh post feed
+        await OnPostSubmitted.InvokeAsync();
+
+    }
+
+}

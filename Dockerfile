@@ -1,0 +1,55 @@
+# Multi-stage build for Tell Teddie Blazor Server application
+# Stage 1: Build stage
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+
+WORKDIR /src
+
+# Copy solution and project files
+COPY ["TellTeddie.Web/TellTeddie.Web.csproj", "TellTeddie.Web/"]
+COPY ["TellTeddie.Contracts/TellTeddie.Contracts.csproj", "TellTeddie.Contracts/"]
+COPY ["TellTeddie.Core/TellTeddie.Core.csproj", "TellTeddie.Core/"]
+COPY ["TellTeddie.Infrastructure/TellTeddie.Infrastructure.csproj", "TellTeddie.Infrastructure/"]
+
+# Restore dependencies
+RUN dotnet restore "TellTeddie.Web/TellTeddie.Web.csproj"
+
+# Copy only necessary source code
+COPY ["TellTeddie.Web/", "TellTeddie.Web/"]
+COPY ["TellTeddie.Contracts/", "TellTeddie.Contracts/"]
+COPY ["TellTeddie.Core/", "TellTeddie.Core/"]
+COPY ["TellTeddie.Infrastructure/", "TellTeddie.Infrastructure/"]
+
+WORKDIR "/src/TellTeddie.Web"
+
+# Build the application
+RUN dotnet build "TellTeddie.Web.csproj" -c Release -o /app/build
+
+# Stage 2: Publish stage
+FROM build AS publish
+
+RUN dotnet publish "TellTeddie.Web.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+# Stage 3: Runtime stage
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+
+WORKDIR /app
+
+# Install curl for health checks
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+# Copy published app from publish stage
+COPY --from=publish /app/publish .
+
+# Expose port 8080 (standard for Container Apps)
+EXPOSE 8080
+
+# Set environment variables
+ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_ENVIRONMENT=Production
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# Run the application
+ENTRYPOINT ["dotnet", "TellTeddie.Web.dll"]

@@ -1,0 +1,95 @@
+﻿@page "/{*pageRoute}"
+@rendermode InteractiveServer
+@layout EmptyLayout
+@using System.Diagnostics
+@using TellTeddie.Web
+@using TellTeddie.Web.Pages
+@inject NavigationManager NavigationManager
+
+<PageTitle>Oops! 404 - Tell Teddie</PageTitle>
+
+<div class="fof-container">
+    <div class="emoji-float emoji-1">🐻</div>
+    <div class="emoji-float emoji-2">🐻</div>
+    <div class="emoji-float emoji-3">🐻</div>
+    <div class="emoji-float emoji-4">🐻</div>
+    <div class="emoji-float emoji-5">🐻</div>
+    <div class="emoji-float emoji-6">🐻</div>
+    <div class="emoji-float emoji-7">🐻</div>
+    <div class="emoji-float emoji-8">🐻</div>
+    <div class="emoji-float emoji-9">🐻</div>
+    <div class="emoji-float emoji-10">🐻</div>
+
+    <div class="fof-content">
+        <img src="assets/images/IMG_3716.png" alt="Gracious Princess Theodora" class="royal-pup" />
+        
+        <h1 class="fof-title">404</h1>
+        <h2 class="fof-subtitle">Are you looking for something?</h2>
+        
+        <p class="fof-message">
+            Even royalty 👑 can get lost sometimes! It seems you've wandered into a part of
+            the kingdom where Teddie doesn't have a hideaway for you.
+        </p>
+
+        <div class="redirect-notice">
+            <p><strong>Don't worry!</strong> You'll be magically transported back to tell Teddie all about in...</p>
+            <div class="countdown">@secondsRemaining</div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn-home" @onclick="GoHome">🏠 Return Home</button>
+        </div>
+
+        @if (!ShowRequestId)
+        {
+            <p style="margin-top: 2rem; font-size: 0.9rem; color: #999;">
+                <strong>Request ID:</strong> <code>@RequestId</code>
+            </p>
+        }
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    [Parameter]
+    public string? PageRoute { get; set; }
+
+    private string? RequestId { get; set; }
+    private bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
+    private int secondsRemaining = 10;
+    private bool isRedirecting = false;
+
+    protected override void OnInitialized()
+    {
+        RequestId = Activity.Current?.Id ?? HttpContext?.TraceIdentifier;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !isRedirecting)
+        {
+            isRedirecting = true;
+            await StartAutoRedirect();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task StartAutoRedirect()
+    {
+        for (int i = 10; i > 0; i--)
+        {
+            secondsRemaining = i;
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(1000);
+        }
+        // Redirect to home
+        NavigationManager.NavigateTo("/", forceLoad: false);
+    }
+
+    private void GoHome()
+    {
+        NavigationManager.NavigateTo("/", forceLoad: false);
+    }
+}

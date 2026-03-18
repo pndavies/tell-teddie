@@ -1,0 +1,55 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "API (.NET 8)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-solution",
+      "program": "${workspaceFolder}/TellTeddie.Api/bin/Debug/net8.0/TellTeddie.Api.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/TellTeddie.Api",
+      "stopAtEntry": false,
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "console": "integratedTerminal",
+        "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "Now listening on:\\s+(https?://\\S+)",
+        "uriFormat": "%s/swagger"
+      }
+
+    },
+    {
+      "name": "Web (.NET 8)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-solution",
+      "program": "${workspaceFolder}/TellTeddie.Web/bin/Debug/net8.0/TellTeddie.Web.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/TellTeddie.Web",
+      "stopAtEntry": false,
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ApiBaseAddress": "http://localhost:5029"
+      },
+      "console": "integratedTerminal",
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "Now listening on:\\s+(https?://\\S+)",
+        "uriFormat": "%s"
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Full Stack: API + Web",
+      "configurations": [
+        "API (.NET 8)",
+        "Web (.NET 8)"
+      ],
+      "stopAll": true
+    }
+  ]
+}

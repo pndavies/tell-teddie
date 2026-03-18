@@ -1,0 +1,18 @@
+# Build outputs
+**/bin/
+**/obj/
+
+# IDE / OS noise
+.DS_Store
+.vscode/*.user
+.vscode/*.suo
+
+# Local secrets and environment files
+.env
+.env.*
+**/appsettings.Local.json
+
+# Test and coverage artifacts
+**/TestResults/
+**/*.trx
+**/coverage*

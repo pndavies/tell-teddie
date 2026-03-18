@@ -1,0 +1,14 @@
+﻿@inherits LayoutComponentBase
+
+<ErrorBoundary>
+    <ChildContent>
+        @Body
+    </ChildContent>
+    <ErrorContent Context="ex">
+        <div class="container py-4">
+            <ErrorPanel Exception="ex" />
+        </div>
+    </ErrorContent>
+</ErrorBoundary>
+
+
