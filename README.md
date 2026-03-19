@@ -100,6 +100,7 @@ The API currently leans more toward an RPC-style route design than a fully RESTf
 
 Current backlog contains features & PBIs for:
 
+- Move project to GitHub completely!
 - Refactor API routes toward more RESTful resource naming
 - Refactor Controllers to use Service layer for API calls
 - Refactor .razor views - move code out of @code block in razor page
