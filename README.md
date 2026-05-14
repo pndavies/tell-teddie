@@ -1,6 +1,8 @@
-# Tell Teddie
+# Tell Teddie ASP.NET Core API & Web App
 
 Public project snapshot for Tell Teddie, a full-stack .NET application for sharing short-lived audio and text posts.
+
+This version of the app is .NET Core API and Web App. 14/05/2026
 
 Live site: https://tellteddie.com
 
